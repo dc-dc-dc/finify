@@ -56,11 +56,22 @@ func (a *Agent) GenerateSystemPromptMessage() []OpenAIChatMessage {
 	return res
 }
 
-func (agent *Agent) Start(ctx context.Context) error {
+func (agent *Agent) Start(ctx context.Context) (err error) {
 	for {
-		res, err := agent.Next(ctx)
-		if err != nil {
-			return err
+		var res *DefaultFormatResponse
+		var tries int
+		for {
+			res, err = agent.Next(ctx)
+			if err == nil {
+				break
+			} else {
+				if tries > 3 {
+					return err
+				}
+				tries += 1
+			}
+			fmt.Printf("got an error, waiting 10 seconds and trying again err: %s\n", err.Error())
+			time.Sleep(10 * time.Second)
 		}
 		// Print the prompt and reasoning and continue if user allows
 		canExec, err := agent.responseHandler(ctx, agent, res)
@@ -104,7 +115,6 @@ func (agent *Agent) Next(ctx context.Context) (*DefaultFormatResponse, error) {
 		return nil, err
 	}
 	aiResponse := strings.TrimSpace(res.Choices[0].Message.Content)
-	agent.history = append(agent.history, OpenAIChatMessage{Role: OPENAI_ROLE_ASSISTANT, Content: aiResponse})
 	var found = false
 	for i, c := range aiResponse {
 		// Find the opening bracket
@@ -123,6 +133,7 @@ func (agent *Agent) Next(ctx context.Context) (*DefaultFormatResponse, error) {
 	if err := json.Unmarshal([]byte(aiResponse), &formattedResponse); err != nil {
 		return nil, fmt.Errorf("failed to parse response: err - %w, response - \n %s", err, aiResponse)
 	}
+	agent.history = append(agent.history, OpenAIChatMessage{Role: OPENAI_ROLE_ASSISTANT, Content: aiResponse})
 	return formattedResponse, nil
 }
 
