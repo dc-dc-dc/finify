@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"strings"
 	"time"
+
+	"github.com/pkoukk/tiktoken-go"
 )
 
 type CommandHandler func(ctx context.Context, agent *Agent, name string, args map[string]interface{}) (string, error)
@@ -16,17 +18,30 @@ type Agent struct {
 	TriggerPrompt   string
 	apiKey          string
 	memory          []string
+	model           string
 	history         []OpenAIChatMessage
 	commandHandler  CommandHandler
 	responseHandler ResponseHandler
 	count           int
+	maxRetries      int
+	maxTokens       int
+	encoder         *tiktoken.Tiktoken
 }
 
 const (
 	DefaultTriggerPrompt = "Determine the next command to use and respond with the format specified above"
 )
 
-func NewAgent(name, systemPrompt, triggerPrompt, apiKey string, commandHandler CommandHandler, responseHandler ResponseHandler) *Agent {
+func NewAgent(name, systemPrompt, triggerPrompt, apiKey, model string, reservedResponseTokens int, commandHandler CommandHandler, responseHandler ResponseHandler) *Agent {
+	maxTokens, ok := modelSet[model]
+	if !ok {
+		panic(fmt.Errorf("invalid model: %s", model))
+	}
+	maxTokens = maxTokens - reservedResponseTokens
+	encoder, err := tiktoken.EncodingForModel(model)
+	if err != nil {
+		panic(err)
+	}
 	return &Agent{
 		Name:            name,
 		SystemPrompt:    systemPrompt,
@@ -36,7 +51,11 @@ func NewAgent(name, systemPrompt, triggerPrompt, apiKey string, commandHandler C
 		responseHandler: responseHandler,
 		memory:          []string{},
 		history:         []OpenAIChatMessage{},
+		model:           model,
 		count:           0,
+		maxRetries:      3,
+		maxTokens:       maxTokens,
+		encoder:         encoder,
 	}
 }
 
@@ -47,13 +66,30 @@ func (a *Agent) GenerateSystemPromptMessage() []OpenAIChatMessage {
 		{Role: OPENAI_ROLE_SYSTEM, Content: a.SystemPrompt},
 		{Role: OPENAI_ROLE_SYSTEM, Content: "the current time and date is " + t.Format("2006-01-02 15:04:05")},
 	}
-
 	// add history
-	for i := len(a.history) - 1; i >= 0; i-- {
-		res = append(res, a.history[i])
+	index := len(a.history) - 1
+	currentTokenCount := a.getTokenCount(res)
+
+	for index >= 0 && currentTokenCount < a.maxTokens {
+		fmt.Printf("current token count: %d\n", currentTokenCount)
+		nextTokenCount := a.getTokenCount([]OpenAIChatMessage{a.history[index]})
+		if nextTokenCount+currentTokenCount > a.maxTokens {
+			break
+		}
+		res = append(res, a.history[index])
+		currentTokenCount += nextTokenCount
+		index -= 1
 	}
 
 	return res
+}
+
+func (a *Agent) getTokenCount(messages []OpenAIChatMessage) int {
+	var t string
+	for _, s := range messages {
+		t += s.Content
+	}
+	return len(a.encoder.Encode(t, nil, nil))
 }
 
 func (agent *Agent) Start(ctx context.Context) (err error) {
@@ -65,12 +101,12 @@ func (agent *Agent) Start(ctx context.Context) (err error) {
 			if err == nil {
 				break
 			} else {
-				if tries > 3 {
+				if tries >= agent.maxRetries {
 					return err
 				}
 				tries += 1
 			}
-			fmt.Printf("got an error, waiting 10 seconds and trying again err: %s\n", err.Error())
+			fmt.Printf("got an error, waiting 10 seconds and trying again attempt: %d err: %s\n", tries, err.Error())
 			time.Sleep(10 * time.Second)
 		}
 		// Print the prompt and reasoning and continue if user allows
@@ -110,7 +146,7 @@ func (agent *Agent) AddToMemory(reply, result string) {
 func (agent *Agent) Next(ctx context.Context) (*DefaultFormatResponse, error) {
 	messages := agent.GenerateSystemPromptMessage()
 
-	res, err := OpenAIChatCall(ctx, agent.apiKey, OPENAI_GPT_3_5_TURBO_0301, messages)
+	res, err := OpenAIChatCall(ctx, agent.apiKey, agent.model, messages)
 	if err != nil {
 		return nil, err
 	}

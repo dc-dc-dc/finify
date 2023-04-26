@@ -51,6 +51,8 @@ func main() {
 		finify.GenerateSystemPrompt(*Prompt, cm.GetCommands(), cm.GetResources()),
 		finify.DefaultTriggerPrompt,
 		OpenAIApiKey,
+		finify.OPENAI_GPT_3_5_TURBO,
+		1000,
 		cm.HandleCommand,
 		commandLineHandler,
 	)

@@ -25,13 +25,13 @@ const (
 )
 
 var (
-	modelSet = map[string]interface{}{
-		OPENAI_GPT_3_5_TURBO:      nil,
-		OPENAI_GPT_4:              nil,
-		OPENAI_GPT_4_0314:         nil,
-		OPENAI_GPT_4_32K:          nil,
-		OPENAI_GPT_4_32K_0314:     nil,
-		OPENAI_GPT_3_5_TURBO_0301: nil,
+	modelSet = map[string]int{
+		OPENAI_GPT_3_5_TURBO:      4096,
+		OPENAI_GPT_3_5_TURBO_0301: 4096,
+		OPENAI_GPT_4:              8192,
+		OPENAI_GPT_4_0314:         8192,
+		OPENAI_GPT_4_32K:          32768,
+		OPENAI_GPT_4_32K_0314:     32768,
 	}
 )
 
