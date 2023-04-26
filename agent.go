@@ -26,12 +26,6 @@ const (
 	DefaultTriggerPrompt = "Determine the next command to use and respond with the format specified above"
 )
 
-//  prompt 					- self.system_prompt,
-//  user_input 				- self.triggering_prompt,
-//	full_message_history 	- self.full_message_history,
-//	permanent_memory 		- self.memory,
-//	token_limit 			- cfg.fast_token_limit,
-
 func NewAgent(name, systemPrompt, triggerPrompt, apiKey string, commandHandler CommandHandler, responseHandler ResponseHandler) *Agent {
 	return &Agent{
 		Name:            name,

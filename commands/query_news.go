@@ -37,7 +37,11 @@ func NewQueryNewsCommand(newsApiKey string) finify.Command {
 	}
 }
 
-func (qnCommand *QueryNewsCommand) GetPGCommand() finify.PGCommand {
+func (qnCommand *QueryNewsCommand) Resource() string {
+	return "query the web for news articles"
+}
+
+func (qnCommand *QueryNewsCommand) PGCommand() finify.PGCommand {
 	return finify.PGCommand{
 		Label: "Query for news articles",
 		Name:  "query_news",

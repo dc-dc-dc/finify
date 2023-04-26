@@ -11,7 +11,11 @@ type UserPromptCommand struct{}
 
 var _ finify.Command = &UserPromptCommand{}
 
-func (fc *UserPromptCommand) GetPGCommand() finify.PGCommand {
+func (fc *UserPromptCommand) Resource() string {
+	return "prompt the user for more input"
+}
+
+func (fc *UserPromptCommand) PGCommand() finify.PGCommand {
 	return finify.PGCommand{
 		Label: "prompt the user for input",
 		Name:  "user_prompt",

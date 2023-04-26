@@ -9,10 +9,12 @@ import (
 
 	"github.com/dc-dc-dc/finify"
 	"github.com/dc-dc-dc/finify/commands"
+	"github.com/fatih/color"
 )
 
 var (
 	SaveOutput = flag.Bool("save", false, "save output to file")
+	Prompt     = flag.String("prompt", "figure out how the public feels about meta announcement that it will now focus more on AI versus VR", "prompt to use")
 )
 
 func init() {
@@ -30,7 +32,6 @@ func main() {
 	// summarize earnings reports and any other fillings for companys on the stock market
 	// get a sentiment analysis for a company
 	// generate charts in python
-	fmt.Println(len(os.Args))
 
 	OpenAIApiKey := os.Getenv("OPENAI_API_KEY")
 	NewsAPIKey := os.Getenv("NEWS_API_KEY")
@@ -41,17 +42,13 @@ func main() {
 	if NewsAPIKey == "" {
 		panic("NEWS_API_KEY not set")
 	}
-	return
 	cm := finify.NewCommandManager()
 	cm.AddCommands(commands.DefaultCommands())
 	cm.AddCommand(commands.NewQueryNewsCommand(NewsAPIKey))
-	prompt := `
-		figure out how the public feels about meta announcement that it will now focus more on AI versus VR
-	`
 	ctx := context.Background()
 	agent := finify.NewAgent(
 		"finify",
-		finify.GenerateSystemPrompt(prompt, cm.GetCommands()),
+		finify.GenerateSystemPrompt(*Prompt, cm.GetCommands(), cm.GetResources()),
 		finify.DefaultTriggerPrompt,
 		OpenAIApiKey,
 		cm.HandleCommand,
@@ -65,7 +62,13 @@ func main() {
 
 func commandLineHandler(ctx context.Context, agent *finify.Agent, res *finify.DefaultFormatResponse) (bool, error) {
 	PrintFormattedResponse(agent.Name, agent.GetCount(), res)
-	fmt.Println("Continue [y/N]?")
+	fmt.Println()
+	if res.Command.Name != "" {
+		fmt.Println("Continue [y/N]?")
+	} else {
+		fmt.Println("Execute command ? [y/N]")
+	}
+
 	var userResponse string
 	fmt.Scanf("%s", &userResponse)
 	if strings.ToLower(userResponse) != "y" {
@@ -75,10 +78,25 @@ func commandLineHandler(ctx context.Context, agent *finify.Agent, res *finify.De
 }
 
 func PrintFormattedResponse(name string, count int, res *finify.DefaultFormatResponse) {
-	fmt.Printf("Agent %s, count %d\n\n", name, count)
-	fmt.Printf("\tThought - %s\n\n", res.Thoughts.Text)
-	fmt.Printf("\tReasoning - %s\n\n", res.Thoughts.Reasoning)
+	color.Set(color.Underline).Add(color.BgGreen)
+	fmt.Printf("\nAgent %s, count %d\n\n", name, count)
+	color.Set(color.Reset)
+
+	color.Set(color.Underline).Add(color.BgMagenta)
+	fmt.Printf("\tThought")
+	color.Set(color.Reset)
+
+	fmt.Printf(" - %s\n\n", res.Thoughts.Text)
+
+	color.Set(color.Underline).Add(color.BgMagenta)
+	fmt.Printf("\tReasoning ")
+	color.Set(color.Reset)
+
+	fmt.Printf("- %s\n\n", res.Thoughts.Reasoning)
+
 	if res.Command.Name != "" {
+		color.Set(color.Underline).Add(color.BgCyan)
 		fmt.Printf("\tCommand: %s, args: %+v\n", res.Command.Name, res.Command.Args)
+		color.Set(color.Reset)
 	}
 }

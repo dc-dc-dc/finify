@@ -25,7 +25,7 @@ func (cm *CommandManager) HandleCommand(ctx context.Context, agent *Agent, name 
 }
 
 func (cm *CommandManager) AddCommand(command Command) error {
-	name := command.GetPGCommand().Name
+	name := command.PGCommand().Name
 	if _, ok := cm.commands[name]; ok {
 		return fmt.Errorf("command %s already exists", name)
 	}
@@ -42,11 +42,21 @@ func (cm *CommandManager) AddCommands(command []Command) error {
 	return nil
 }
 
+func (cm *CommandManager) GetResources() []string {
+	res := make([]string, len(cm.commands))
+	var index int
+	for _, command := range cm.commands {
+		res[index] = command.Resource()
+		index += 1
+	}
+	return res
+}
+
 func (cm *CommandManager) GetCommands() []PGCommand {
 	commands := make([]PGCommand, len(cm.commands))
 	var index int
 	for _, command := range cm.commands {
-		commands[index] = command.GetPGCommand()
+		commands[index] = command.PGCommand()
 		index += 1
 	}
 	return commands

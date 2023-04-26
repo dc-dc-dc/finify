@@ -3,7 +3,12 @@ package finify
 import "context"
 
 type Command interface {
-	GetPGCommand() PGCommand
+	// Give a short description of the capability
+	Resource() string
+	// Returns the pg command for the pre prompt
+	PGCommand() PGCommand
+
+	// Handle the command when the LLM requests it
 	Call(ctx context.Context, agent *Agent, args map[string]interface{}) (string, error)
 }
 
