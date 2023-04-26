@@ -38,5 +38,5 @@ func (fc *UserPromptCommand) Call(ctx context.Context, agent *finify.Agent, args
 	if err != nil {
 		return "", err
 	}
-	return agent.Name + ":" + prompt + "\nUser Response: " + userResponse, nil
+	return agent.Name + " Request:" + prompt + "\nUser Response: " + userResponse, nil
 }

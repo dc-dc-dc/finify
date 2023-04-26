@@ -125,7 +125,7 @@ func (agent *Agent) Start(ctx context.Context) (err error) {
 			if err != nil {
 				return err
 			}
-			if res.Command.Name == "finished" {
+			if res.Command.Name == "goal_completed" {
 				break
 			}
 		}

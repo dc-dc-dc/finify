@@ -20,10 +20,10 @@ func (fc *FinishedCommand) Resource() string {
 
 func (fc *FinishedCommand) PGCommand() finify.PGCommand {
 	return finify.PGCommand{
-		Label: "when you accomplished your goal",
-		Name:  "finished",
+		Label: "when you completed your original goal",
+		Name:  "goal_completed",
 		Args: map[string]string{
-			"summary": "a summary of what you accomplished",
+			"summary": "summary of what you did",
 		},
 	}
 }

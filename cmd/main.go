@@ -65,7 +65,7 @@ func main() {
 func commandLineHandler(ctx context.Context, agent *finify.Agent, res *finify.DefaultFormatResponse) (bool, error) {
 	PrintFormattedResponse(agent.Name, agent.GetCount(), res)
 	fmt.Println()
-	if res.Command.Name != "" {
+	if res.Command.Name == "" {
 		fmt.Println("Continue [y/N]?")
 	} else {
 		fmt.Println("Execute command ? [y/N]")
