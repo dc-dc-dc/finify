@@ -1,6 +1,13 @@
 package finify
 
-import "context"
+import (
+	"context"
+	"errors"
+)
+
+var (
+	ErrCommandInvalidArgs = errors.New("invalid args for command")
+)
 
 type Command interface {
 	// Give a short description of the capability

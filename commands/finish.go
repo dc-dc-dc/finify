@@ -22,7 +22,9 @@ func (fc *FinishedCommand) PGCommand() finify.PGCommand {
 	return finify.PGCommand{
 		Label: "when you accomplished your goal",
 		Name:  "finished",
-		Args:  map[string]string{},
+		Args: map[string]string{
+			"summary": "a summary of what you accomplished",
+		},
 	}
 }
 

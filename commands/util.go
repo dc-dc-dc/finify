@@ -6,5 +6,6 @@ func DefaultCommands() []finify.Command {
 	return []finify.Command{
 		&FinishedCommand{},
 		&UserPromptCommand{},
+		&GoogleSearchCommand{},
 	}
 }
